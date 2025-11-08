@@ -18,7 +18,7 @@ make backend
 make frontend
 
 # Open: http://localhost:5173  (frontend)
-# REST base: http://localhost:4000/api
+# REST base: http://localhost:4000/api/docs
 # GraphQL:   http://localhost:4000/graphql
 ```
 
