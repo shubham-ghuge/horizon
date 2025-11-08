@@ -47,7 +47,9 @@ app.get('/api/turbines', async (_req, res) => {
 app.post('/api/turbines', async (req, res) => {
   const { name, manufacturer, mwRating, lat, lng } = req.body || {};
   if (!name) return res.status(400).json({ error: 'name required' });
-  const t = await prisma.turbine.create({ data: { name, manufacturer, mwRating, lat, lng } });
+  const t = await prisma.turbine.create({
+    data: { name, manufacturer, mwRating, lat, lng },
+  });
   res.status(201).json(t);
 });
 
@@ -76,35 +78,59 @@ data: ${JSON.stringify({ inspectionId, at: new Date().toISOString() })}
 }
 
 // GraphQL
-const typeDefs = readFileSync(path.join(process.cwd(), 'src/graphql/schema.graphql'), 'utf8');
+const typeDefs = readFileSync(
+  path.join(process.cwd(), 'src/graphql/schema.graphql'),
+  'utf8'
+);
 const resolvers = {
   Query: {
-    inspection: async (_: any, { id }: any) => prisma.inspection.findUnique({
-      where: { id },
-      include: { turbine: true, findings: true, repairPlan: true },
-    }),
-    repairPlan: async (_: any, { inspectionId }: any) => prisma.repairPlan.findUnique({ where: { inspectionId } }),
+    inspection: async (_: any, { id }: any) =>
+      prisma.inspection.findUnique({
+        where: { id },
+        include: { turbine: true, findings: true, repairPlan: true },
+      }),
+    repairPlan: async (_: any, { inspectionId }: any) =>
+      prisma.repairPlan.findUnique({ where: { inspectionId } }),
   },
   Mutation: {
     generateRepairPlan: async (_: any, { inspectionId }: any) => {
-      const inspection = await prisma.inspection.findUnique({ where: { id: inspectionId }, include: { findings: true } });
+      const inspection = await prisma.inspection.findUnique({
+        where: { id: inspectionId },
+        include: { findings: true },
+      });
       if (!inspection) throw new Error('Inspection not found');
 
       // Severity rule: if category=BLADE_DAMAGE and notes contain "crack", min severity=4
-      const adjusted = inspection.findings.map(f => {
+      const adjusted = inspection.findings.map((f) => {
         const hasCrack = (f.notes || '').toLowerCase().includes('crack');
-        const severity = (f.category === 'BLADE_DAMAGE' and hasCrack) ? Math.max(4, f.severity) : f.severity;
+        const severity =
+          f.category === 'BLADE_DAMAGE' && hasCrack
+            ? Math.max(4, f.severity)
+            : f.severity;
         return { ...f, severity };
       });
 
-      const total = adjusted.reduce((s, f) => s + Number(f.estimatedCost || 0), 0);
-      const maxSeverity = Math.max(0, ...adjusted.map(f => f.severity));
-      const priority = maxSeverity >= 5 ? 'HIGH' : (maxSeverity >= 3 ? 'MEDIUM' : 'LOW');
+      const total = adjusted.reduce(
+        (s, f) => s + Number(f.estimatedCost || 0),
+        0
+      );
+      const maxSeverity = Math.max(0, ...adjusted.map((f) => f.severity));
+      const priority =
+        maxSeverity >= 5 ? 'HIGH' : maxSeverity >= 3 ? 'MEDIUM' : 'LOW';
 
       const plan = await prisma.repairPlan.upsert({
         where: { inspectionId },
-        update: { priority: priority as any, totalEstimatedCost: total, snapshotJson: adjusted },
-        create: { inspectionId, priority: priority as any, totalEstimatedCost: total, snapshotJson: adjusted },
+        update: {
+          priority: priority as any,
+          totalEstimatedCost: total,
+          snapshotJson: adjusted,
+        },
+        create: {
+          inspectionId,
+          priority: priority as any,
+          totalEstimatedCost: total,
+          snapshotJson: adjusted,
+        },
       });
 
       notifyPlan(inspectionId);
@@ -129,8 +155,9 @@ const resolvers = {
 };
 
 const server = new ApolloServer({ typeDefs, resolvers });
-await server.start();
-server.applyMiddleware({ app, path: '/graphql' });
+server.start().then(() => {
+  server.applyMiddleware({ app: app as any, path: '/graphql' });
+});
 
 const port = Number(process.env.PORT || 4000);
 app.listen(port, () => console.log(`Backend on http://localhost:${port}`));
