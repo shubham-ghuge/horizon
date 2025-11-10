@@ -46,6 +46,7 @@ model Inspection {
   createdAt     DateTime @default(now())
 
   @@index([turbineId, date])
+  @@unique([turbineId, date])
 }
 
 enum DataSource {
