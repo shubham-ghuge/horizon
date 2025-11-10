@@ -2,31 +2,37 @@ import { Router } from 'express';
 import { turbineController } from './turbine.controller';
 import { CreateTurbineDto, UpdateTurbineDto } from './turbine.types';
 import { validateDto } from '../../common/middlewares/validate';
-// import { authenticate } from '../../common/middlewares/auth';
+import { authenticate, authorize } from '../auth/auth.middleware';
+import { Role } from '../auth/auth.types';
 
 const router = Router();
 
+// Public routes
 router.get('/turbines', turbineController.getTurbines);
 
 router.get('/turbines/:id', turbineController.getTurbineById);
 
+// Protected routes (require authentication)
 router.post(
   '/turbines',
-  // authenticate, // Uncomment when auth is ready
+  authenticate,
+  authorize(Role.ADMIN, Role.ENGINEER),
   validateDto(CreateTurbineDto),
   turbineController.createTurbine
 );
 
 router.patch(
   '/turbines/:id',
-  // authenticate, // Uncomment when auth is ready
+  authenticate,
+  authorize(Role.ADMIN, Role.ENGINEER),
   validateDto(UpdateTurbineDto),
   turbineController.updateTurbine
 );
 
 router.delete(
   '/turbines/:id',
-  // authenticate, // Uncomment when auth is ready
+  authenticate,
+  authorize(Role.ADMIN),
   turbineController.deleteTurbine
 );
 

@@ -8,7 +8,6 @@ import { initializeGraphQL } from './graphql/server';
 
 export const createApp = () => {
   const app = express();
-  initializeGraphQL(app);
 
   // Security & Middleware
   app.use(helmet());
@@ -22,10 +21,23 @@ export const createApp = () => {
   });
 
   // API Documentation
-  app.use('/api/docs', swaggerServe, swaggerSetup);
+  try {
+    app.use('/api/docs', swaggerServe, swaggerSetup);
+    console.log('✅ Swagger documentation loaded');
+  } catch (error) {
+    console.warn(
+      '⚠️  Swagger documentation not available:',
+      (error as Error).message
+    );
+  }
 
   // Register all feature routes
   registerRoutes(app);
+
+  // GraphQL initialization (async)
+  initializeGraphQL(app).catch((error: Error) => {
+    console.warn('⚠️  GraphQL server initialization failed:', error.message);
+  });
 
   // Error handling (must be last)
   app.use(errorHandler);
