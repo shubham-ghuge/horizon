@@ -30,6 +30,20 @@ export class TurbineController {
 
     return ApiResponse.success(res, turbine);
   });
+
+  updateTurbine = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const turbine = await turbineService.update(id, req.body);
+    return ApiResponse.success(res, turbine);
+  });
+
+  deleteTurbine = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    await turbineService.delete(id);
+    return ApiResponse.success(res, {
+      message: 'Turbine deleted successfully',
+    });
+  });
 }
 
 export const turbineController = new TurbineController();

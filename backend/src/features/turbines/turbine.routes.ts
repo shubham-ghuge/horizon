@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { turbineController } from './turbine.controller';
-// import { turbineValidation } from './turbine.validation';
+import { CreateTurbineDto, UpdateTurbineDto } from './turbine.types';
+import { validateDto } from '../../common/middlewares/validate';
 // import { authenticate } from '../../common/middlewares/auth';
 
 const router = Router();
@@ -9,24 +10,24 @@ router.get('/turbines', turbineController.getTurbines);
 
 router.get('/turbines/:id', turbineController.getTurbineById);
 
-// router.post(
-//   '/turbines',
-//   authenticate,
-//   validate(turbineValidation.create),
-//   turbineController.createTurbine
-// );
+router.post(
+  '/turbines',
+  // authenticate, // Uncomment when auth is ready
+  validateDto(CreateTurbineDto),
+  turbineController.createTurbine
+);
 
-// router.patch(
-//   '/turbines/:id',
-//   authenticate,
-//   validate(turbineValidation.update),
-//   turbineController.updateTurbine
-// );
+router.patch(
+  '/turbines/:id',
+  // authenticate, // Uncomment when auth is ready
+  validateDto(UpdateTurbineDto),
+  turbineController.updateTurbine
+);
 
-// router.delete(
-//   '/turbines/:id',
-//   authenticate,
-//   turbineController.deleteTurbine
-// );
+router.delete(
+  '/turbines/:id',
+  // authenticate, // Uncomment when auth is ready
+  turbineController.deleteTurbine
+);
 
 export default router;

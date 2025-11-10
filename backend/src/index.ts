@@ -10,11 +10,6 @@ const start = async () => {
     // Your app initialization
     const app = createApp();
 
-    // Health check endpoint
-    app.get('/api/healthz', (_req: Request, res: Response): void => {
-      res.json({ ok: true });
-    });
-
     app.listen(process.env.PORT || 4000, () => {
       console.log(`Server is running on port ${process.env.PORT || 4000}`);
     });

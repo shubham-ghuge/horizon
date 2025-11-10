@@ -23,12 +23,6 @@ export class TurbineService {
   }
 
   async create(data: CreateTurbineDto) {
-    // Validation
-    if (!data.name) {
-      throw new AppError('Name is required', 400);
-    }
-
-    // Business rules
     const exists = await turbineRepository.findByName(data.name);
     if (exists) {
       throw new AppError('Turbine with this name already exists', 409);

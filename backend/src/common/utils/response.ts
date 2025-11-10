@@ -30,4 +30,15 @@ export class ApiResponse {
       message,
     });
   }
+  static badRequest(
+    res: Response,
+    message: string = 'Bad Request',
+    errors?: any
+  ) {
+    return res.status(400).json({
+      success: false,
+      message,
+      errors,
+    });
+  }
 }
