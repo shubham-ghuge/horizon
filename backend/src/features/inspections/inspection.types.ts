@@ -1,7 +1,6 @@
 import {
   IsString,
   IsNotEmpty,
-  IsDate,
   IsArray,
   ValidateNested,
   Length,
@@ -9,6 +8,8 @@ import {
   Min,
   IsEnum,
   Max,
+  IsOptional,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -19,7 +20,7 @@ export enum FindingCategory {
   UNKNOWN = 'UNKNOWN',
 }
 
-export enum InspectionDataSource {
+export enum DataSource {
   DRONE = 'DRONE',
   MANUAL = 'MANUAL',
 }
@@ -34,49 +35,37 @@ export class FindingDto {
   @Max(10, { message: 'Severity must not exceed 10' })
   severity!: number;
 
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 255, {
-    message: 'Description must be between 1 and 255 characters',
-  })
-  description!: string;
-
   @IsNumber()
   @IsNotEmpty()
-  @Min(0, { message: 'Estimated cost must be greater than 0' })
+  @Min(0, { message: 'Estimated cost must be greater than or equal to 0' })
   estimatedCost!: number;
 
   @IsString()
-  @IsNotEmpty()
-  @Length(1, 255, { message: 'Notes must be between 1 and 255 characters' })
-  notes!: string;
+  @IsOptional()
+  notes?: string;
 }
 
 export class CreateInspectionDto {
   @IsString()
   @IsNotEmpty()
-  @Length(1, 255, {
-    message: 'Turbine ID must be between 1 and 255 characters',
-  })
   turbineId!: string;
 
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
-  date!: Date;
+  date!: string;
 
   @IsString()
   @IsNotEmpty()
-  @Length(1, 255, {
-    message: 'Data source must be between 1 and 255 characters',
-  })
-  dataSource!: string;
+  @Length(1, 255)
+  inspectorName!: string;
+
+  @IsEnum(DataSource, { message: 'Invalid data source' })
+  @IsNotEmpty()
+  dataSource!: DataSource;
 
   @IsString()
-  @IsNotEmpty()
-  @Length(1, 255, {
-    message: 'Recording URL must be between 1 and 255 characters',
-  })
-  recordingUrl!: string;
+  @IsOptional()
+  rawPackageUrl?: string;
 
   @IsArray()
   @IsNotEmpty()
@@ -85,4 +74,61 @@ export class CreateInspectionDto {
   findings!: FindingDto[];
 }
 
-export class UpdateInspectionDto extends CreateInspectionDto {}
+export class UpdateInspectionDto {
+  @IsString()
+  @IsOptional()
+  inspectorName?: string;
+
+  @IsDateString()
+  @IsOptional()
+  date?: string;
+
+  @IsEnum(DataSource, { message: 'Invalid data source' })
+  @IsOptional()
+  dataSource?: DataSource;
+
+  @IsString()
+  @IsOptional()
+  rawPackageUrl?: string;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => FindingDto)
+  findings?: FindingDto[];
+}
+
+export class InspectionFilterDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  page?: number = 1;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(100)
+  @Type(() => Number)
+  limit?: number = 10;
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  turbineId?: string;
+
+  @IsOptional()
+  @IsEnum(DataSource, { message: 'Invalid data source' })
+  dataSource?: DataSource;
+
+  @IsOptional()
+  @IsString()
+  searchNotes?: string;
+}

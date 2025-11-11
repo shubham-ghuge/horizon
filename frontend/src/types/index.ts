@@ -148,3 +148,13 @@ export interface InspectionsResponse {
     totalPages: number;
   };
 }
+
+export interface InspectionFilters {
+  page?: number;
+  limit?: number;
+  startDate?: string;
+  endDate?: string;
+  turbineId?: string;
+  dataSource?: DataSource;
+  searchNotes?: string;
+}

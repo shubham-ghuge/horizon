@@ -4,23 +4,28 @@ import {
   CreateInspectionRequest,
   InspectionsResponse,
   ApiResponse,
+  InspectionFilters,
 } from '../../types';
 
 export const inspectionsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getInspections: builder.query<
+    getInspections: builder.mutation<
       ApiResponse<InspectionsResponse>,
-      { page?: number; limit?: number }
+      InspectionFilters
     >({
-      query: ({ page = 1, limit = 10 }) => ({
-        url: '/api/v1/inspections',
-        params: { page, limit },
+      query: (filters) => ({
+        url: '/api/v1/inspections/search',
+        method: 'POST',
+        body: {
+          page: filters.page || 1,
+          limit: filters.limit || 10,
+          ...(filters.startDate && { startDate: filters.startDate }),
+          ...(filters.endDate && { endDate: filters.endDate }),
+          ...(filters.turbineId && { turbineId: filters.turbineId }),
+          ...(filters.dataSource && { dataSource: filters.dataSource }),
+          ...(filters.searchNotes && { searchNotes: filters.searchNotes }),
+        },
       }),
-      providesTags: (result) =>
-        result?.data?.data.map(({ id }) => ({
-          type: 'Inspection' as const,
-          id,
-        })) || [],
     }),
 
     getInspectionById: builder.query<Inspection, string>({
@@ -66,7 +71,7 @@ export const inspectionsApi = api.injectEndpoints({
 });
 
 export const {
-  useGetInspectionsQuery,
+  useGetInspectionsMutation,
   useGetInspectionByIdQuery,
   useCreateInspectionMutation,
   useUpdateInspectionMutation,

@@ -1,74 +1,177 @@
-import { DataSource } from '@prisma/client';
-import { AppError } from '../../common/middlewares/error-handler';
 import { prisma } from '../../config/prisma';
-import { turbineService } from '../turbines/turbine.service';
 import {
   CreateInspectionDto,
-  FindingDto,
   UpdateInspectionDto,
+  InspectionFilterDto,
 } from './inspection.types';
+import { Prisma } from '@prisma/client';
 
 export class InspectionRepository {
-  async findMany(options: { skip?: number; take?: number }) {
+  private buildWhereClause(filters?: InspectionFilterDto): Prisma.InspectionWhereInput {
+    if (!filters) return {};
+
+    const where: Prisma.InspectionWhereInput = {};
+
+    // Date range filter
+    if (filters.startDate || filters.endDate) {
+      where.date = {};
+      if (filters.startDate) {
+        where.date.gte = new Date(filters.startDate);
+      }
+      if (filters.endDate) {
+        where.date.lte = new Date(filters.endDate);
+      }
+    }
+
+    // Turbine filter
+    if (filters.turbineId) {
+      where.turbineId = filters.turbineId;
+    }
+
+    // Data source filter
+    if (filters.dataSource) {
+      where.dataSource = filters.dataSource;
+    }
+
+    // Text search on findings notes
+    if (filters.searchNotes) {
+      where.findings = {
+        some: {
+          notes: {
+            contains: filters.searchNotes,
+            mode: 'insensitive',
+          },
+        },
+      };
+    }
+
+    return where;
+  }
+
+  async findMany(options: {
+    skip?: number;
+    take?: number;
+    filters?: InspectionFilterDto;
+  }) {
+    const where = this.buildWhereClause(options.filters);
+
     return prisma.inspection.findMany({
+      where,
       skip: options.skip,
       take: options.take,
       orderBy: { createdAt: 'desc' },
+      include: {
+        turbine: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        findings: true,
+      },
     });
   }
 
   async findById(id: string) {
-    return prisma.repairPlan.findUnique({
+    return prisma.inspection.findUnique({
       where: { id },
       include: {
-        inspection: {},
+        turbine: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        findings: true,
       },
     });
   }
 
   async create(data: CreateInspectionDto) {
-    const turbine = turbineService.findById(data.turbineId);
-    if (!turbine) {
-      throw new AppError('Turbine not found', 404);
-    }
-    // create inspection
-    const inspection = await prisma.inspection.create({
+    return prisma.inspection.create({
       data: {
         turbineId: data.turbineId,
-        date: data.date,
-        dataSource: data.dataSource as DataSource,
-        rawPackageUrl: data.recordingUrl,
+        date: new Date(data.date),
+        inspectorName: data.inspectorName,
+        dataSource: data.dataSource,
+        rawPackageUrl: data.rawPackageUrl,
+        findings: {
+          create: data.findings.map((finding) => ({
+            category: finding.category,
+            severity: finding.severity,
+            estimatedCost: finding.estimatedCost,
+            notes: finding.notes,
+          })),
+        },
+      },
+      include: {
+        findings: true,
       },
     });
-    // create findings
-    const findings = await prisma.finding.createMany({
-      data: data.findings.map((finding: FindingDto) => ({
-        inspectionId: inspection.id,
-        category: finding.category,
-        severity: finding.severity,
-        estimatedCost: finding.estimatedCost,
-        notes: finding.notes,
-      })),
-    });
-
-    return inspection;
   }
 
   async update(id: string, data: UpdateInspectionDto) {
-    return prisma.turbine.update({
+    // If findings are provided, we need to delete old ones and create new ones in a transaction
+    if (data.findings) {
+      const findings = data.findings;
+      return prisma.$transaction(async (tx) => {
+        // Delete existing findings
+        await tx.finding.deleteMany({
+          where: { inspectionId: id },
+        });
+
+        // Update inspection with new findings
+        return tx.inspection.update({
+          where: { id },
+          data: {
+            ...(data.date && { date: new Date(data.date) }),
+            ...(data.inspectorName && { inspectorName: data.inspectorName }),
+            ...(data.dataSource && { dataSource: data.dataSource }),
+            ...(data.rawPackageUrl !== undefined && {
+              rawPackageUrl: data.rawPackageUrl,
+            }),
+            findings: {
+              create: findings.map((finding) => ({
+                category: finding.category,
+                severity: finding.severity,
+                estimatedCost: finding.estimatedCost,
+                notes: finding.notes,
+              })),
+            },
+          },
+          include: {
+            findings: true,
+          },
+        });
+      });
+    }
+
+    // If no findings provided, just update the inspection fields
+    return prisma.inspection.update({
       where: { id },
-      data,
+      data: {
+        ...(data.date && { date: new Date(data.date) }),
+        ...(data.inspectorName && { inspectorName: data.inspectorName }),
+        ...(data.dataSource && { dataSource: data.dataSource }),
+        ...(data.rawPackageUrl !== undefined && {
+          rawPackageUrl: data.rawPackageUrl,
+        }),
+      },
+      include: {
+        findings: true,
+      },
     });
   }
 
   async delete(id: string) {
-    return prisma.repairPlan.delete({
+    return prisma.inspection.delete({
       where: { id },
     });
   }
 
-  async count() {
-    return prisma.repairPlan.count();
+  async count(filters?: InspectionFilterDto) {
+    const where = this.buildWhereClause(filters);
+    return prisma.inspection.count({ where });
   }
 }
 

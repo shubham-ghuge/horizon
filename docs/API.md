@@ -39,15 +39,27 @@ Authorization: Bearer <your-jwt-token>
 
 ##### Inspection Endpoints
 
-- `GET /inspections` - List inspections with filtering (ADMIN, ENGINEER only)
-  - Query Parameters:
+- `POST /inspections/search` - List/filter inspections (ADMIN, ENGINEER only)
+  - Request Body (all optional):
     - `page` - Page number (default: 1)
-    - `limit` - Items per page (default: 10)
+    - `limit` - Items per page (default: 10, max: 100)
     - `startDate` - Filter by inspection date >= startDate (ISO 8601 format)
     - `endDate` - Filter by inspection date <= endDate (ISO 8601 format)
     - `turbineId` - Filter by specific turbine ID
     - `dataSource` - Filter by data source (DRONE or MANUAL)
     - `searchNotes` - Text search in findings notes (case-insensitive)
+  - Example Request:
+    ```json
+    {
+      "page": 1,
+      "limit": 20,
+      "startDate": "2024-01-01",
+      "endDate": "2024-12-31",
+      "turbineId": "clxyz123",
+      "dataSource": "DRONE",
+      "searchNotes": "crack"
+    }
+    ```
 - `GET /inspections/:id` - Get inspection by ID (ADMIN, ENGINEER only)
 - `POST /inspections` - Create inspection (ADMIN, ENGINEER only)
 - `PATCH /inspections/:id` - Update inspection (ADMIN, ENGINEER only)

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../app/hooks';
 import {
-  useGetInspectionsQuery,
+  useGetInspectionsMutation,
   useCreateInspectionMutation,
   useDeleteInspectionMutation,
 } from '../features/inspections/inspectionApi';
@@ -44,7 +44,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../components/ui/dialog';
-import { Trash2, Plus, Eye, X } from 'lucide-react';
+import { Trash2, Plus, Eye, X, Filter } from 'lucide-react';
 
 interface Finding {
   category: FindingCategory;
@@ -54,6 +54,7 @@ interface Finding {
 }
 
 export const Inspections: React.FC = () => {
+  // Form state
   const [turbineId, setTurbineId] = useState('');
   const [date, setDate] = useState('');
   const [inspectorName, setInspectorName] = useState('');
@@ -68,29 +69,54 @@ export const Inspections: React.FC = () => {
     },
   ]);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Filter state
   const [page, setPage] = useState(1);
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterTurbineId, setFilterTurbineId] = useState('');
+  const [filterDataSource, setFilterDataSource] = useState<DataSource | ''>('');
+  const [filterSearchNotes, setFilterSearchNotes] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   const navigate = useNavigate();
 
   // RTK Query hooks
-  const {
-    data: inspectionsData,
-    isLoading,
-    error,
-  } = useGetInspectionsQuery({ page, limit: 10 });
-  const inspections = inspectionsData?.data?.data || [];
-  const meta = inspectionsData?.data?.meta;
-
-  const { data: turbinesData } = useGetTurbinesQuery({ page: 1, limit: 100 });
-  const turbines = turbinesData?.data?.turbines || [];
-
+  const [getInspections, { data: inspectionsData, isLoading, error }] =
+    useGetInspectionsMutation();
   const [createInspection, { isLoading: isCreating }] =
     useCreateInspectionMutation();
   const [deleteInspection] = useDeleteInspectionMutation();
+  const { data: turbinesData } = useGetTurbinesQuery({ page: 1, limit: 100 });
 
-  // Role-based permissions
+  // Auth
   const canCreate = useAppSelector(selectHasRole([Role.ADMIN, Role.ENGINEER]));
   const canDelete = useAppSelector(selectHasRole([Role.ADMIN]));
+
+  // Extract data
+  const inspections = inspectionsData?.data?.data || [];
+  const meta = inspectionsData?.data?.meta;
+  const turbines = turbinesData?.data?.turbines || [];
+
+  // Fetch inspections when filters or page change
+  useEffect(() => {
+    const filters: any = { page, limit: 10 };
+    if (filterStartDate) filters.startDate = filterStartDate;
+    if (filterEndDate) filters.endDate = filterEndDate;
+    if (filterTurbineId) filters.turbineId = filterTurbineId;
+    if (filterDataSource) filters.dataSource = filterDataSource;
+    if (filterSearchNotes) filters.searchNotes = filterSearchNotes;
+
+    getInspections(filters);
+  }, [
+    page,
+    filterStartDate,
+    filterEndDate,
+    filterTurbineId,
+    filterDataSource,
+    filterSearchNotes,
+    getInspections,
+  ]);
 
   const addFinding = () => {
     setFindings([
@@ -470,6 +496,139 @@ export const Inspections: React.FC = () => {
           </Dialog>
         )}
       </div>
+
+      {/* Filters Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Filters</CardTitle>
+              <CardDescription>
+                Filter inspections by date, turbine, or search notes
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="mr-2 h-4 w-4" />
+              {showFilters ? 'Hide' : 'Show'} Filters
+            </Button>
+          </div>
+        </CardHeader>
+        {showFilters && (
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="filter-startDate">Start Date</Label>
+                <Input
+                  id="filter-startDate"
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => {
+                    setFilterStartDate(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="filter-endDate">End Date</Label>
+                <Input
+                  id="filter-endDate"
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => {
+                    setFilterEndDate(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="filter-turbine">Turbine</Label>
+                <Select
+                  value={filterTurbineId}
+                  onValueChange={(value) => {
+                    setFilterTurbineId(value);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger id="filter-turbine">
+                    <SelectValue placeholder="All turbines" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All turbines</SelectItem>
+                    {turbines.map((turbine) => (
+                      <SelectItem key={turbine.id} value={turbine.id}>
+                        {turbine.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="filter-dataSource">Data Source</Label>
+                <Select
+                  value={filterDataSource}
+                  onValueChange={(value) => {
+                    setFilterDataSource(value as DataSource | '');
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger id="filter-dataSource">
+                    <SelectValue placeholder="All sources" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All sources</SelectItem>
+                    <SelectItem value={DataSource.DRONE}>Drone</SelectItem>
+                    <SelectItem value={DataSource.MANUAL}>Manual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2 lg:col-span-2">
+                <Label htmlFor="filter-searchNotes">Search Notes</Label>
+                <Input
+                  id="filter-searchNotes"
+                  type="text"
+                  placeholder="Search in findings notes..."
+                  value={filterSearchNotes}
+                  onChange={(e) => {
+                    setFilterSearchNotes(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+            </div>
+
+            {(filterStartDate ||
+              filterEndDate ||
+              filterTurbineId ||
+              filterDataSource ||
+              filterSearchNotes) && (
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFilterStartDate('');
+                    setFilterEndDate('');
+                    setFilterTurbineId('');
+                    setFilterDataSource('');
+                    setFilterSearchNotes('');
+                    setPage(1);
+                  }}
+                >
+                  Clear All Filters
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
 
       <Card>
         <CardHeader>
