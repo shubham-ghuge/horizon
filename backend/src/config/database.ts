@@ -1,8 +1,9 @@
 import { connectPrisma, disconnectPrisma, checkDatabaseHealth } from './prisma';
 import { connectMongo, disconnectMongo } from './mongo';
+import { logger } from './logger';
 
 export const connectDatabase = async () => {
-  console.log('🔌 Connecting to databases...');
+  logger.info('Connecting to databases...');
 
   // Connect to PostgreSQL via Prisma
   await connectPrisma();
@@ -10,16 +11,16 @@ export const connectDatabase = async () => {
   // Connect to MongoDB (optional)
   await connectMongo();
 
-  console.log('✅ All databases connected');
+  logger.info('All databases connected');
 };
 
 export const disconnectDatabase = async () => {
-  console.log('🔌 Disconnecting from databases...');
+  logger.info('Disconnecting from databases...');
 
   await disconnectPrisma();
   await disconnectMongo();
 
-  console.log('✅ All databases disconnected');
+  logger.info('All databases disconnected');
 };
 
 export const checkAllDatabasesHealth = async () => {

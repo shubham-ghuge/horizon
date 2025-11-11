@@ -6,6 +6,7 @@ import {
   InspectionFilterDto,
 } from './inspection.types';
 import { turbineRepository } from '../turbines/turbine.repository';
+import { Prisma } from '@prisma/client';
 
 export class InspectionService {
   async findAll(options: {
@@ -36,14 +37,23 @@ export class InspectionService {
   }
 
   async create(data: CreateInspectionDto) {
-    // Check if turbine exists
     const turbine = await turbineRepository.findById(data.turbineId);
-    if (!turbine) {
-      throw new AppError('Turbine not found', 404);
-    }
+    if (!turbine) throw new AppError('Turbine not found', 404);
 
-    // Create inspection with findings
-    return inspectionRepository.create(data);
+    try {
+      return await inspectionRepository.create(data);
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new AppError(
+          'Inspection already exists for this turbine and date',
+          409
+        );
+      }
+      throw err;
+    }
   }
 
   async findById(id: string) {

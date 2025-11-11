@@ -140,6 +140,7 @@ export const Inspections: React.FC = () => {
         updateFinding={form.updateFinding}
         turbines={turbines}
         isCreating={form.isCreating}
+        errorMessage={form.isCreateError ? form.createErrorMessage : undefined}
         onSubmit={form.handleCreate}
         onCancel={form.handleCancel}
       />

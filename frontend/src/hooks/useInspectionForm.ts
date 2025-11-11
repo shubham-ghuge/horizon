@@ -19,8 +19,10 @@ export const useInspectionForm = () => {
   const [rawPackageUrl, setRawPackageUrl] = useState('');
   const [findings, setFindings] = useState<Finding[]>([{ ...DEFAULT_FINDING }]);
 
-  const [createInspection, { isLoading: isCreating }] =
-    useCreateInspectionMutation();
+  const [
+    createInspection,
+    { isLoading: isCreating, isError: isCreateError, error: createError },
+  ] = useCreateInspectionMutation();
 
   const addFinding = () => {
     setFindings([...findings, { ...DEFAULT_FINDING }]);
@@ -48,6 +50,19 @@ export const useInspectionForm = () => {
     setDataSource(DataSource.DRONE);
     setRawPackageUrl('');
     setFindings([{ ...DEFAULT_FINDING }]);
+  };
+
+  const parseErrorMessage = (err: unknown): string => {
+    const anyErr = err as any;
+    if (!anyErr) return '';
+    if ('status' in anyErr) {
+      const data = anyErr.data;
+      if (typeof data === 'string') return data;
+      if (data?.message) return data.message as string;
+      return `Request failed with status ${anyErr.status}`;
+    }
+    if (anyErr?.message) return anyErr.message as string;
+    return 'Failed to create inspection';
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -102,6 +117,8 @@ export const useInspectionForm = () => {
     updateFinding,
     // Form actions
     isCreating,
+    isCreateError,
+    createErrorMessage: parseErrorMessage(createError),
     handleCreate,
     handleCancel,
     resetForm,

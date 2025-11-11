@@ -5,6 +5,7 @@ import {
   FetchArgs,
 } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../app/store';
+import { pushNotification } from '../features/notifications/notificationsSlice';
 
 const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_BASE || 'http://localhost:4000',
@@ -38,6 +39,31 @@ const baseQueryWithReauth = async (
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
+    } else {
+      // Dispatch a global error notification for other server/client errors
+      const anyErr = result.error as any;
+      let message = 'An unexpected error occurred';
+      if (typeof anyErr?.data === 'string') {
+        message = anyErr.data;
+      } else if (anyErr?.data?.message) {
+        message = anyErr.data.message as string;
+      } else if (anyErr?.error) {
+        message = anyErr.error as string;
+      } else if (anyErr?.status) {
+        message = `Request failed with status ${anyErr.status}`;
+      }
+      // Best-effort title by status code
+      const title =
+        anyErr?.status && typeof anyErr.status === 'number'
+          ? `${anyErr.status >= 500 ? 'Server' : 'Request'} error (${anyErr.status})`
+          : 'Request error';
+      api.dispatch(
+        pushNotification({
+          type: 'error',
+          title,
+          message,
+        })
+      );
     }
   }
 

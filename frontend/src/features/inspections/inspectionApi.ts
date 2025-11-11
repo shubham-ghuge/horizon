@@ -9,10 +9,7 @@ import {
 
 export const inspectionsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getInspections: builder.mutation<
-      ApiResponse<InspectionsResponse>,
-      InspectionFilters
-    >({
+    getInspections: builder.query<ApiResponse<InspectionsResponse>, InspectionFilters>({
       query: (filters) => ({
         url: '/api/v1/inspections/search',
         method: 'POST',
@@ -26,6 +23,16 @@ export const inspectionsApi = api.injectEndpoints({
           ...(filters.searchNotes && { searchNotes: filters.searchNotes }),
         },
       }),
+      providesTags: (result) => {
+        const inspections =
+          result?.data?.data && Array.isArray(result.data.data)
+            ? result.data.data
+            : [];
+        return [
+          { type: 'Inspection' as const, id: 'LIST' },
+          ...inspections.map((i) => ({ type: 'Inspection' as const, id: i.id })),
+        ];
+      },
     }),
 
     getInspectionById: builder.query<Inspection, string>({
@@ -71,7 +78,7 @@ export const inspectionsApi = api.injectEndpoints({
 });
 
 export const {
-  useGetInspectionsMutation,
+  useGetInspectionsQuery,
   useGetInspectionByIdQuery,
   useCreateInspectionMutation,
   useUpdateInspectionMutation,

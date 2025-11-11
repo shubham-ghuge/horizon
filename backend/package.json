@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "prisma": {
+    "schema": "src/database/prisma/schema.prisma"
+  },
   "scripts": {
     "dev": "node --loader ts-node/esm --watch src/index.ts",
     "build": "tsc -p tsconfig.json",

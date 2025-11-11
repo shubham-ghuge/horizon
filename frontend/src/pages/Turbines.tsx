@@ -37,18 +37,22 @@ import {
   DialogTrigger,
 } from '../components/ui/dialog';
 import { Trash2, Plus, Eye } from 'lucide-react';
+import { Pagination } from '../components/ui/pagination';
 
 export const Turbines: React.FC = () => {
   const [name, setName] = useState('');
   const [manufacturer, setManufacturer] = useState('');
   const [mwRating, setMwRating] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
   const navigate = useNavigate();
 
   // RTK Query hooks
-  const { data, isLoading, error } = useGetTurbinesQuery();
+  const { data, isLoading, error } = useGetTurbinesQuery({ page, limit });
   const turbines = data?.data?.turbines || [];
+  const meta = data?.data?.meta;
   const [createTurbine, { isLoading: isCreating }] = useCreateTurbineMutation();
   const [deleteTurbine] = useDeleteTurbineMutation();
 
@@ -214,58 +218,69 @@ export const Turbines: React.FC = () => {
               )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Manufacturer</TableHead>
-                  <TableHead>MW Rating</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {turbines.map((turbine) => (
-                  <TableRow key={turbine.id}>
-                    <TableCell className="font-medium">
-                      {turbine.name}
-                    </TableCell>
-                    <TableCell>{turbine.manufacturer || '-'}</TableCell>
-                    <TableCell>
-                      {turbine.mwRating ? (
-                        <Badge variant="outline">{turbine.mwRating} MW</Badge>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(turbine.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/turbines/${turbine.id}`)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-
-                        {canDelete && (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Manufacturer</TableHead>
+                    <TableHead>MW Rating</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {turbines.map((turbine) => (
+                    <TableRow key={turbine.id}>
+                      <TableCell className="font-medium">
+                        {turbine.name}
+                      </TableCell>
+                      <TableCell>{turbine.manufacturer || '-'}</TableCell>
+                      <TableCell>
+                        {turbine.mwRating ? (
+                          <Badge variant="outline">{turbine.mwRating} MW</Badge>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(turbine.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(turbine.id)}
+                            onClick={() => navigate(`/turbines/${turbine.id}`)}
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(turbine.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {meta && (
+                <Pagination
+                  className="mt-4"
+                  page={page}
+                  totalPages={meta.totalPages}
+                  total={meta.total}
+                  onPageChange={setPage}
+                />
+              )}
+            </>
           )}
         </CardContent>
       </Card>

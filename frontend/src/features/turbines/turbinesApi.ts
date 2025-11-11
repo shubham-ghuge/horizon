@@ -17,12 +17,14 @@ export const turbinesApi = api.injectEndpoints({
         params: params || undefined,
       }),
       providesTags: (result) => {
-        return (
-          result?.data?.turbines.map((turbine) => ({
+        const items = result?.data?.turbines || [];
+        return [
+          { type: 'Turbine' as const, id: 'LIST' },
+          ...items.map((turbine) => ({
             type: 'Turbine' as const,
             id: turbine.id,
-          })) || []
-        );
+          })),
+        ];
       },
     }),
 

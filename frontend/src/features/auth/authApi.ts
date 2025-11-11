@@ -9,10 +9,6 @@ export const authApi = api.injectEndpoints({
         method: 'POST',
         body: credentials,
       }),
-      transformResponse: (response) => {
-        console.log(response);
-        return (response as any).data;
-      },
       invalidatesTags: ['User'],
     }),
 

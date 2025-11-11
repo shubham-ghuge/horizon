@@ -5,6 +5,7 @@ import { swaggerServe, swaggerSetup } from './config/swagger';
 import { errorHandler } from './common/middlewares/error-handler';
 import { registerRoutes } from './routes';
 import { initializeGraphQL } from './graphql/server';
+import { logger } from './config/logger';
 
 export const createApp = () => {
   const app = express();
@@ -15,6 +16,30 @@ export const createApp = () => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
+  // Request logging
+  app.use((req, res, next) => {
+    const startTimeMs = Date.now();
+    res.on('finish', () => {
+      const durationMs = Date.now() - startTimeMs;
+      const details = {
+        method: req.method,
+        url: req.originalUrl,
+        statusCode: res.statusCode,
+        durationMs,
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+      };
+      if (res.statusCode >= 500) {
+        logger.error(`HTTP ${req.method} ${req.originalUrl}`, details);
+      } else if (res.statusCode >= 400) {
+        logger.warn(`HTTP ${req.method} ${req.originalUrl}`, details);
+      } else {
+        logger.info(`HTTP ${req.method} ${req.originalUrl}`, details);
+      }
+    });
+    next();
+  });
+
   // Health check
   app.get('/healthz', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -23,12 +48,9 @@ export const createApp = () => {
   // API Documentation
   try {
     app.use('/api/docs', swaggerServe, swaggerSetup);
-    console.log('✅ Swagger documentation loaded');
+    logger.info('Swagger documentation loaded');
   } catch (error) {
-    console.warn(
-      '⚠️  Swagger documentation not available:',
-      (error as Error).message
-    );
+    logger.warn('Swagger documentation not available', error as Error);
   }
 
   // Register all feature routes
@@ -36,7 +58,7 @@ export const createApp = () => {
 
   // GraphQL initialization (async)
   initializeGraphQL(app).catch((error: Error) => {
-    console.warn('⚠️  GraphQL server initialization failed:', error.message);
+    logger.warn('GraphQL server initialization failed', error);
   });
 
   // Error handling (must be last)

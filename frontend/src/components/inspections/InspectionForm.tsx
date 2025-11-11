@@ -45,6 +45,7 @@ interface InspectionFormProps {
   updateFinding: (index: number, field: keyof Finding, value: any) => void;
   turbines: Turbine[];
   isCreating: boolean;
+  errorMessage?: string;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
 }
@@ -68,6 +69,7 @@ export const InspectionForm: React.FC<InspectionFormProps> = ({
   updateFinding,
   turbines,
   isCreating,
+  errorMessage,
   onSubmit,
   onCancel,
 }) => {
@@ -208,4 +210,3 @@ export const InspectionForm: React.FC<InspectionFormProps> = ({
     </Dialog>
   );
 };
-

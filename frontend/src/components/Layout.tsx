@@ -15,6 +15,7 @@ import {
 } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
+import { GlobalAlerts } from './GlobalAlerts';
 
 export const Layout: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -67,6 +68,7 @@ export const Layout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <GlobalAlerts />
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">

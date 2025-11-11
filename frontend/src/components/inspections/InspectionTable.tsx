@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from '../ui/card';
 import { Trash2, Plus, Eye } from 'lucide-react';
+import { Pagination } from '../ui/pagination';
 
 interface Finding {
   severity: number;
@@ -166,30 +167,14 @@ export const InspectionTable: React.FC<InspectionTableProps> = ({
             </Table>
 
             {/* Pagination */}
-            {meta && meta.totalPages > 1 && (
-              <div className="flex items-center justify-between mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Page {meta.page} of {meta.totalPages}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onPageChange(page - 1)}
-                    disabled={page === 1}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onPageChange(page + 1)}
-                    disabled={page === meta.totalPages}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
+            {meta && (
+              <Pagination
+                className="mt-4"
+                page={page}
+                totalPages={meta.totalPages}
+                total={meta.total}
+                onPageChange={onPageChange}
+              />
             )}
           </>
         )}

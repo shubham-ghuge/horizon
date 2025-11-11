@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { DataSource } from '../types';
-import { useGetInspectionsMutation } from '../features/inspections/inspectionApi';
+import { useGetInspectionsQuery } from '../features/inspections/inspectionApi';
 
 export const useInspectionFilters = () => {
   const [page, setPage] = useState(1);
@@ -11,19 +11,14 @@ export const useInspectionFilters = () => {
   const [filterSearchNotes, setFilterSearchNotes] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const [getInspections, { data: inspectionsData, isLoading, error }] =
-    useGetInspectionsMutation();
-
-  // Fetch inspections when filters or page change
-  useEffect(() => {
-    const filters: any = { page, limit: 10 };
-    if (filterStartDate) filters.startDate = filterStartDate;
-    if (filterEndDate) filters.endDate = filterEndDate;
-    if (filterTurbineId && filterTurbineId !== 'all') filters.turbineId = filterTurbineId;
-    if (filterDataSource && filterDataSource !== 'all') filters.dataSource = filterDataSource;
-    if (filterSearchNotes) filters.searchNotes = filterSearchNotes;
-
-    getInspections(filters);
+  const filters = useMemo(() => {
+    const f: any = { page, limit: 10 };
+    if (filterStartDate) f.startDate = filterStartDate;
+    if (filterEndDate) f.endDate = filterEndDate;
+    if (filterTurbineId && filterTurbineId !== 'all') f.turbineId = filterTurbineId;
+    if (filterDataSource && filterDataSource !== 'all') f.dataSource = filterDataSource;
+    if (filterSearchNotes) f.searchNotes = filterSearchNotes;
+    return f;
   }, [
     page,
     filterStartDate,
@@ -31,8 +26,9 @@ export const useInspectionFilters = () => {
     filterTurbineId,
     filterDataSource,
     filterSearchNotes,
-    getInspections,
   ]);
+
+  const { data: inspectionsData, isLoading, error } = useGetInspectionsQuery(filters);
 
   return {
     // State
