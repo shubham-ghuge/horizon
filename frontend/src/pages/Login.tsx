@@ -97,7 +97,7 @@ export const Login: React.FC = () => {
 
           <div className="mt-4 text-center text-sm text-muted-foreground">
             <p>Demo Credentials:</p>
-            <p>admin@example.com / engineer@example.com</p>
+            <p>admin@example.com / eng@example.com</p>
           </div>
         </CardContent>
       </Card>

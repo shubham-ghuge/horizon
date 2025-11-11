@@ -6,18 +6,14 @@ import { store } from './app/store';
 import { Login } from './pages/Login';
 import { Turbines } from './pages/Turbines';
 import { Inspections } from './pages/Inspections';
+import { TurbineDetails } from './pages/TurbineDetails';
+import { InspectionDetails } from './pages/InspectionDetails';
+import { RepairPlans } from './pages/RepairPlans';
 import { Role } from './types';
 import './index.css';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 
-// Placeholder pages
-const RepairPlans = () => (
-  <div className="text-2xl font-bold">Repair Plans Page - Coming Soon</div>
-);
-const Admin = () => (
-  <div className="text-2xl font-bold">Admin Page - Coming Soon</div>
-);
 const Unauthorized = () => (
   <div className="flex items-center justify-center h-96">
     <div className="text-center">
@@ -47,20 +43,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           >
             <Route index element={<Navigate to="/turbines" replace />} />
             <Route path="turbines" element={<Turbines />} />
+            <Route path="turbines/:id" element={<TurbineDetails />} />
             <Route path="inspections" element={<Inspections />} />
+            <Route path="inspections/:id" element={<InspectionDetails />} />
             <Route
               path="repair-plans"
               element={
                 <ProtectedRoute allowedRoles={[Role.ADMIN, Role.ENGINEER]}>
                   <RepairPlans />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="admin"
-              element={
-                <ProtectedRoute allowedRoles={[Role.ADMIN]}>
-                  <Admin />
                 </ProtectedRoute>
               }
             />

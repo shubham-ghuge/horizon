@@ -28,7 +28,7 @@ export const turbinesApi = api.injectEndpoints({
       },
     }),
 
-    getTurbineById: builder.query<Turbine, string>({
+    getTurbineById: builder.query<ApiResponse<Turbine>, string>({
       query: (id) => `/api/v1/turbines/${id}`,
       providesTags: (result, error, id) => [{ type: 'Turbine', id }],
     }),

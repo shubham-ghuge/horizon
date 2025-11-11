@@ -3,28 +3,59 @@ import path from 'path';
 import yaml from 'yaml';
 import swaggerUi from 'swagger-ui-express';
 
-let openapiDoc: any = null;
+let openapiDocCache: any = null;
 
-try {
-  const openapiPath = path.join(process.cwd(), 'openapi.yaml');
-  if (existsSync(openapiPath)) {
-    openapiDoc = yaml.parse(readFileSync(openapiPath, 'utf8'));
-  } else {
-    console.warn('⚠️  openapi.yaml not found at:', openapiPath);
+function resolveOpenApiPath(): string | null {
+  // Compute module directory in ESM-friendly way
+  const moduleDir = (() => {
+    try {
+      // import.meta.url is available in ESM
+      const url = new URL(import.meta.url);
+      return path.dirname(decodeURIComponent(url.pathname));
+    } catch {
+      // Fallback for environments that provide __dirname
+      // @ts-ignore
+      return typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+    }
+  })();
+
+  const candidatePaths = [
+    // When running from backend directory
+    path.join(process.cwd(), 'openapi.yaml'),
+    // When running from monorepo root
+    path.join(process.cwd(), 'backend', 'openapi.yaml'),
+    // When running compiled code from dist (e.g., dist/config -> ../../openapi.yaml)
+    path.resolve(moduleDir, '../../openapi.yaml'),
+    // Another fallback when path depth differs
+    path.resolve(moduleDir, '../../../openapi.yaml'),
+  ];
+  for (const p of candidatePaths) {
+    if (existsSync(p)) return p;
   }
-} catch (error) {
-  console.error('Failed to load OpenAPI spec:', (error as Error).message);
+  console.warn('⚠️  openapi.yaml not found. Tried paths:', candidatePaths);
+  return null;
+}
+
+export function loadOpenApiDoc() {
+  if (openapiDocCache) return openapiDocCache;
+  try {
+    const openapiPath = resolveOpenApiPath();
+    if (openapiPath) {
+      openapiDocCache = yaml.parse(readFileSync(openapiPath, 'utf8'));
+      return openapiDocCache;
+    }
+  } catch (error) {
+    console.error('Failed to load OpenAPI spec:', (error as Error).message);
+  }
+  return null;
 }
 
 export const swaggerServe = swaggerUi.serve;
-export const swaggerSetup = openapiDoc
-  ? swaggerUi.setup(openapiDoc)
-  : swaggerUi.setup({
-      openapi: '3.0.0',
-      info: {
-        title: 'Horizon API',
-        version: '1.0.0',
-        description: 'API documentation unavailable',
-      },
-      paths: {},
-    });
+// Point UI to fetch the spec from /api/docs.json so it always reflects latest
+export const swaggerSetup = swaggerUi.setup(undefined, {
+  swaggerOptions: {
+    url: '/api/docs.json',
+  },
+});
+
+export const getOpenApiDoc = () => loadOpenApiDoc();

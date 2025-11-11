@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { swaggerServe, swaggerSetup } from './config/swagger';
+import { swaggerServe, swaggerSetup, getOpenApiDoc } from './config/swagger';
 import { errorHandler } from './common/middlewares/error-handler';
 import { registerRoutes } from './routes';
 import { initializeGraphQL } from './graphql/server';
@@ -47,6 +47,18 @@ export const createApp = () => {
 
   // API Documentation
   try {
+    // Relax Helmet headers for Swagger UI only (avoid CSP issues)
+    app.use(
+      '/api/docs',
+      helmet({
+        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: false,
+      })
+    );
+    // Expose raw JSON for debugging/editors
+    app.get('/api/docs.json', (req, res) => {
+      res.json(getOpenApiDoc() ?? {});
+    });
     app.use('/api/docs', swaggerServe, swaggerSetup);
     logger.info('Swagger documentation loaded');
   } catch (error) {

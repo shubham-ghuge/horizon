@@ -16,12 +16,13 @@ import {
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { GlobalAlerts } from './GlobalAlerts';
+import { pushNotification } from '../features/notifications/notificationsSlice';
 
 export const Layout: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectCurrentUser);
   const navigate = useNavigate();
-  
+
   // Fetch current user if token exists but user data is not loaded
   const token = useAppSelector((state) => state.auth.token);
   const { error } = useGetCurrentUserQuery(undefined, {
@@ -66,6 +67,42 @@ export const Layout: React.FC = () => {
     }
   };
 
+  // Realtime notifications via SSE
+  useEffect(() => {
+    const base = import.meta.env.VITE_API_BASE || 'http://localhost:4000';
+    const url = `${base}/api/v1/events`;
+    const es = new EventSource(url, { withCredentials: false });
+
+    es.addEventListener('repair-plan.created', (evt: MessageEvent) => {
+      try {
+        const payload = JSON.parse(evt.data);
+        const priority = payload?.plan?.priority ?? 'UNKNOWN';
+        const cost = payload?.plan?.totalEstimatedCost ?? 0;
+        dispatch(
+          pushNotification({
+            type: 'info',
+            title: 'Repair plan generated',
+            message: `Priority ${priority} • Estimated cost $${Number(
+              cost
+            ).toFixed(2)}`,
+          })
+        );
+      } catch {
+        // ignore parse errors
+      }
+    });
+
+    es.onerror = () => {
+      // Silently close on error; it may auto-reconnect
+    };
+
+    return () => {
+      es.close();
+    };
+    // Intentionally no deps to keep a single connection for the session
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <GlobalAlerts />
@@ -90,12 +127,6 @@ export const Layout: React.FC = () => {
               {hasRole([Role.ADMIN, Role.ENGINEER]) && (
                 <Link to="/repair-plans">
                   <Button variant="ghost">Repair Plans</Button>
-                </Link>
-              )}
-
-              {hasRole([Role.ADMIN]) && (
-                <Link to="/admin">
-                  <Button variant="ghost">Admin</Button>
                 </Link>
               )}
             </nav>

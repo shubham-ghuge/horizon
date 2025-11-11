@@ -9,7 +9,10 @@ import {
 
 export const inspectionsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getInspections: builder.query<ApiResponse<InspectionsResponse>, InspectionFilters>({
+    getInspections: builder.query<
+      ApiResponse<InspectionsResponse>,
+      InspectionFilters
+    >({
       query: (filters) => ({
         url: '/api/v1/inspections/search',
         method: 'POST',
@@ -30,12 +33,15 @@ export const inspectionsApi = api.injectEndpoints({
             : [];
         return [
           { type: 'Inspection' as const, id: 'LIST' },
-          ...inspections.map((i) => ({ type: 'Inspection' as const, id: i.id })),
+          ...inspections.map((i) => ({
+            type: 'Inspection' as const,
+            id: i.id,
+          })),
         ];
       },
     }),
 
-    getInspectionById: builder.query<Inspection, string>({
+    getInspectionById: builder.query<ApiResponse<Inspection>, string>({
       query: (id) => `/api/v1/inspections/${id}`,
       providesTags: (result, error, id) => [{ type: 'Inspection', id }],
     }),

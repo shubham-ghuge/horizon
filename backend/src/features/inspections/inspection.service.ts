@@ -7,6 +7,7 @@ import {
 } from './inspection.types';
 import { turbineRepository } from '../turbines/turbine.repository';
 import { Prisma } from '@prisma/client';
+import { repairPlanService } from '../repair-plans/repair-plan.service';
 
 export class InspectionService {
   async findAll(options: {
@@ -41,7 +42,16 @@ export class InspectionService {
     if (!turbine) throw new AppError('Turbine not found', 404);
 
     try {
-      return await inspectionRepository.create(data);
+      const inspection = await inspectionRepository.create(data);
+
+      // Generate repair plan after inspection creation (non-blocking failure)
+      try {
+        await repairPlanService.generateRepairPlan(inspection.id);
+      } catch (genErr) {
+        // Best-effort; do not block inspection creation on repair plan errors
+      }
+
+      return inspection;
     } catch (err) {
       if (
         err instanceof Prisma.PrismaClientKnownRequestError &&

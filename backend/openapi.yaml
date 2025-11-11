@@ -122,6 +122,63 @@ components:
               type: integer
             totalPages:
               type: integer
+    RepairPlan:
+      type: object
+      properties:
+        id:
+          type: string
+        inspectionId:
+          type: string
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        totalEstimatedCost:
+          type: number
+          minimum: 0
+        snapshotJson:
+          description: Adjusted findings snapshot used to generate the plan
+          nullable: true
+        inspection:
+          type: object
+          properties:
+            id:
+              type: string
+            turbineId:
+              type: string
+            turbine:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    RepairPlanList:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairPlan'
+        meta:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
 
 paths:
   /healthz:
@@ -349,6 +406,8 @@ paths:
       responses:
         '200':
           description: OK
+      security:
+        - bearerAuth: []
     post:
       summary: Create turbine
       tags:
@@ -368,6 +427,8 @@ paths:
       summary: Get turbine by ID
       tags:
         - Turbines
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -377,6 +438,10 @@ paths:
       responses:
         '200':
           description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Requires ADMIN or ENGINEER role
         '404':
           description: Turbine not found
     patch:
@@ -421,3 +486,273 @@ paths:
           description: Forbidden - Requires ADMIN role
         '404':
           description: Turbine not found
+
+  /inspections/search:
+    post:
+      summary: Search inspections
+      tags:
+        - Inspections
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  minimum: 1
+                  default: 1
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 10
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+                turbineId:
+                  type: string
+                dataSource:
+                  type: string
+                  enum: [DRONE, MANUAL]
+                searchNotes:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionList'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Requires ADMIN or ENGINEER role
+
+  /inspections:
+    post:
+      summary: Create inspection
+      tags:
+        - Inspections
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [turbineId, date, inspectorName, dataSource, findings]
+              properties:
+                turbineId:
+                  type: string
+                date:
+                  type: string
+                  format: date-time
+                inspectorName:
+                  type: string
+                dataSource:
+                  type: string
+                  enum: [DRONE, MANUAL]
+                rawPackageUrl:
+                  type: string
+                  nullable: true
+                findings:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Finding'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Requires ADMIN or ENGINEER role
+
+  /inspections/{id}:
+    get:
+      summary: Get inspection by ID
+      tags:
+        - Inspections
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Requires ADMIN or ENGINEER role
+        '404':
+          description: Inspection not found
+    patch:
+      summary: Update inspection
+      tags:
+        - Inspections
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inspectorName:
+                  type: string
+                date:
+                  type: string
+                  format: date-time
+                dataSource:
+                  type: string
+                  enum: [DRONE, MANUAL]
+                rawPackageUrl:
+                  type: string
+                findings:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Finding'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Requires ADMIN or ENGINEER role
+        '404':
+          description: Inspection not found
+    delete:
+      summary: Delete inspection
+      tags:
+        - Inspections
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Requires ADMIN role
+        '404':
+          description: Inspection not found
+
+  /repair-plans/search:
+    post:
+      summary: Search repair plans
+      tags:
+        - Repair Plans
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  minimum: 1
+                  default: 1
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 10
+                priority:
+                  type: string
+                  enum: [LOW, MEDIUM, HIGH]
+                turbineId:
+                  type: string
+                minTotalEstimatedCost:
+                  type: number
+                  minimum: 0
+                maxTotalEstimatedCost:
+                  type: number
+                  minimum: 0
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairPlanList'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - Requires ADMIN or ENGINEER role
+
+  /events:
+    get:
+      summary: Server-Sent Events stream for realtime notifications
+      tags:
+        - Notifications
+      responses:
+        '200':
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: "event: repair-plan.created\\ndata: {\\\"inspectionId\\\":\\\"abc\\\",\\\"plan\\\":{\\\"id\\\":\\\"rp1\\\",\\\"priority\\\":\\\"HIGH\\\",\\\"totalEstimatedCost\\\":1234,\\\"createdAt\\\":\\\"2024-01-01T00:00:00.000Z\\\"}}\\n\\n"
