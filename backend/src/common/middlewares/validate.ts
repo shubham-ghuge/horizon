@@ -24,6 +24,26 @@ export const validateDto = (dtoClass: any) => {
   };
 };
 
+// export const validateQuery = (dtoClass: any) => {
+//   return async (req: Request, res: Response, next: NextFunction) => {
+//     const dtoInstance = plainToInstance(dtoClass, req.query);
+
+//     const errors = await validate(dtoInstance, {
+//       whitelist: true,
+//       skipMissingProperties: true,
+//     });
+
+//     if (errors.length > 0) {
+//       const formattedErrors = formatValidationErrors(errors);
+//       return ApiResponse.badRequest(res, 'Validation failed', formattedErrors);
+//     }
+
+//     // Replace req.query with the transformed instance
+//     req.query = dtoInstance as any;
+//     next();
+//   };
+// };
+
 function formatValidationErrors(errors: ValidationError[]): any {
   return errors.reduce((acc: any, error: ValidationError) => {
     const property = error.property;

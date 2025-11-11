@@ -46,7 +46,7 @@ export const Login: React.FC = () => {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Welcome to TurbineOps
+            Welcome to Horizon
           </CardTitle>
           <CardDescription className="text-center">
             Sign in to your account to continue
@@ -97,7 +97,7 @@ export const Login: React.FC = () => {
 
           <div className="mt-4 text-center text-sm text-muted-foreground">
             <p>Demo Credentials:</p>
-            <p>admin@turbineops.com / engineer@turbineops.com</p>
+            <p>admin@example.com / engineer@example.com</p>
           </div>
         </CardContent>
       </Card>

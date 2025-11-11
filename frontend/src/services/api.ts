@@ -1,4 +1,9 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import {
+  createApi,
+  fetchBaseQuery,
+  BaseQueryApi,
+  FetchArgs,
+} from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../app/store';
 
 const baseQuery = fetchBaseQuery({
@@ -15,10 +20,34 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
+// Enhanced base query with auth error handling
+const baseQueryWithReauth = async (
+  args: string | FetchArgs,
+  api: BaseQueryApi,
+  extraOptions: {}
+) => {
+  const result = await baseQuery(args, api, extraOptions);
+
+  // Handle authentication errors
+  if (result.error) {
+    if (result.error.status === 401 || result.error.status === 403) {
+      // Clear auth state without importing to avoid circular dependency
+      localStorage.removeItem('token');
+
+      // Redirect to login if not already there
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+  }
+
+  return result;
+};
+
 // Base API configuration
 export const api = createApi({
   reducerPath: 'api',
-  baseQuery,
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['User', 'Turbine', 'Inspection', 'Finding', 'RepairPlan'],
   endpoints: () => ({}),
 });

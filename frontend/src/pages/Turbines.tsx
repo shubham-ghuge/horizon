@@ -47,7 +47,8 @@ export const Turbines: React.FC = () => {
   const navigate = useNavigate();
 
   // RTK Query hooks
-  const { data: turbines = [], isLoading, error } = useGetTurbinesQuery();
+  const { data, isLoading, error } = useGetTurbinesQuery();
+  const turbines = data?.data?.turbines || [];
   const [createTurbine, { isLoading: isCreating }] = useCreateTurbineMutation();
   const [deleteTurbine] = useDeleteTurbineMutation();
 

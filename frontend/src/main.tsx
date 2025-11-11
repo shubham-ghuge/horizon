@@ -5,15 +5,13 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { store } from './app/store';
 import { Login } from './pages/Login';
 import { Turbines } from './pages/Turbines';
+import { Inspections } from './pages/Inspections';
 import { Role } from './types';
 import './index.css';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 
 // Placeholder pages
-const Inspections = () => (
-  <div className="text-2xl font-bold">Inspections Page - Coming Soon</div>
-);
 const RepairPlans = () => (
   <div className="text-2xl font-bold">Repair Plans Page - Coming Soon</div>
 );

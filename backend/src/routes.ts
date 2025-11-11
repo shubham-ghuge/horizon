@@ -2,7 +2,7 @@
 import { Application } from 'express';
 import authRoutes from './features/auth/auth.routes';
 import turbineRoutes from './features/turbines/turbine.routes';
-// import inspectionRoutes from './features/inspections/inspection.routes.js';
+import inspectionRoutes from './features/inspections/inspection.routes';
 // import repairPlanRoutes from './features/repair-plans/repair-plan.routes.js';
 // import notificationRoutes from './features/notifications/notification.routes.js';
 
@@ -11,7 +11,7 @@ export const registerRoutes = (app: Application) => {
 
   app.use(API_PREFIX, authRoutes);
   app.use(API_PREFIX, turbineRoutes);
-  //   app.use(API_PREFIX, inspectionRoutes);
+  app.use(API_PREFIX, inspectionRoutes);
   //   app.use(API_PREFIX, repairPlanRoutes);
   //   app.use(API_PREFIX, notificationRoutes);
 };

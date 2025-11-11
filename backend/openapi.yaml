@@ -46,6 +46,83 @@ components:
         message:
           type: string
 
+    Inspection:
+      type: object
+      properties:
+        id:
+          type: string
+        turbineId:
+          type: string
+        date:
+          type: string
+          format: date-time
+        inspectorName:
+          type: string
+        dataSource:
+          type: string
+          enum: [DRONE, MANUAL]
+        rawPackageUrl:
+          type: string
+          nullable: true
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'
+        turbine:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Finding:
+      type: object
+      properties:
+        id:
+          type: string
+        category:
+          type: string
+          enum: [BLADE_DAMAGE, LIGHTNING, EROSION, UNKNOWN]
+        severity:
+          type: integer
+          minimum: 1
+          maximum: 10
+        estimatedCost:
+          type: number
+          minimum: 0
+        notes:
+          type: string
+          nullable: true
+
+    InspectionList:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Inspection'
+        meta:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+
 paths:
   /healthz:
     get:

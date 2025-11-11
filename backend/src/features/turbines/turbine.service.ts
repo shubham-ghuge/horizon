@@ -12,7 +12,7 @@ export class TurbineService {
     ]);
 
     return {
-      data: turbines,
+      turbines,
       meta: {
         page: options.page,
         limit: options.limit,
@@ -46,6 +46,14 @@ export class TurbineService {
   }
 
   async delete(id: string) {
+    const turbine = await this.findById(id);
+    if (!turbine) {
+      throw new AppError('Turbine not found', 404);
+    }
+
+    if (turbine.inspections.length > 0) {
+      throw new AppError('Turbine has inspections', 400);
+    }
     return turbineRepository.delete(id);
   }
 }

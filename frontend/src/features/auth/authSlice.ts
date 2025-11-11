@@ -8,10 +8,12 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
+const token = localStorage.getItem('token');
+
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false,
+  token,
+  isAuthenticated: !!token, // Set to true if token exists
 };
 
 export const authSlice = createSlice({
@@ -37,14 +39,16 @@ export const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addMatcher(authApi.endpoints.login.matchFulfilled, (state, action) => {
-        state.user = action.payload.user;
-        state.token = action.payload.token;
+        console.log(action.payload);
+        state.user = action.payload!.data!.user;
+        state.token = action.payload!.data!.token;
         state.isAuthenticated = true;
-        localStorage.setItem('token', action.payload.token);
+        localStorage.setItem('token', action.payload!.data!.token);
       })
       .addMatcher(
         authApi.endpoints.getCurrentUser.matchFulfilled,
         (state, action) => {
+          console.log(action.payload);
           state.user = action.payload;
           state.isAuthenticated = true;
         }

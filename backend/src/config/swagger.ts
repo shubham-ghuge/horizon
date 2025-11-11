@@ -22,7 +22,7 @@ export const swaggerSetup = openapiDoc
   : swaggerUi.setup({
       openapi: '3.0.0',
       info: {
-        title: 'TurbineOps API',
+        title: 'Horizon API',
         version: '1.0.0',
         description: 'API documentation unavailable',
       },

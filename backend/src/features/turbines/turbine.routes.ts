@@ -7,12 +7,20 @@ import { Role } from '../auth/auth.types';
 
 const router = Router();
 
-// Public routes
-router.get('/turbines', turbineController.getTurbines);
+router.get(
+  '/turbines',
+  authenticate,
+  authorize(Role.ADMIN, Role.ENGINEER),
+  turbineController.getTurbines
+);
 
-router.get('/turbines/:id', turbineController.getTurbineById);
+router.get(
+  '/turbines/:id',
+  authenticate,
+  authorize(Role.ADMIN, Role.ENGINEER),
+  turbineController.getTurbineById
+);
 
-// Protected routes (require authentication)
 router.post(
   '/turbines',
   authenticate,

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { logout, selectCurrentUser } from '../features/auth/authSlice';
+import { useGetCurrentUserQuery } from '../features/auth/authApi';
 import { Role } from '../types';
 import { Button } from './ui/button';
 import {
@@ -19,6 +20,20 @@ export const Layout: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectCurrentUser);
   const navigate = useNavigate();
+  
+  // Fetch current user if token exists but user data is not loaded
+  const token = useAppSelector((state) => state.auth.token);
+  const { error } = useGetCurrentUserQuery(undefined, {
+    skip: !token || !!user, // Skip if no token or user already loaded
+  });
+
+  // Handle auth errors - dispatch logout to sync Redux state
+  useEffect(() => {
+    if (error) {
+      dispatch(logout());
+      navigate('/login');
+    }
+  }, [error, dispatch, navigate]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -57,7 +72,7 @@ export const Layout: React.FC = () => {
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2">
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                TurbineOps
+                Horizon
               </span>
             </Link>
 

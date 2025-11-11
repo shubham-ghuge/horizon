@@ -1,14 +1,18 @@
 import { api } from '../../services/api';
-import { User, LoginRequest, LoginResponse } from '../../types';
+import { User, LoginRequest, LoginResponse, ApiResponse } from '../../types';
 
 export const authApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    login: builder.mutation<LoginResponse, LoginRequest>({
+    login: builder.mutation<ApiResponse<LoginResponse>, LoginRequest>({
       query: (credentials) => ({
         url: '/api/v1/auth/login',
         method: 'POST',
         body: credentials,
       }),
+      transformResponse: (response) => {
+        console.log(response);
+        return (response as any).data;
+      },
       invalidatesTags: ['User'],
     }),
 
@@ -21,7 +25,10 @@ export const authApi = api.injectEndpoints({
     }),
 
     getCurrentUser: builder.query<User, void>({
-      query: () => '/api/v1/auth/me',
+      query: () => '/api/v1/auth/profile',
+      transformResponse: (response: any) => {
+        return response.data || response;
+      },
       providesTags: ['User'],
     }),
 
@@ -34,6 +41,9 @@ export const authApi = api.injectEndpoints({
         method: 'POST',
         body: data,
       }),
+      transformResponse: (response: any) => {
+        return response.data || response;
+      },
     }),
   }),
 });

@@ -1,20 +1,26 @@
 import { api } from '../../services/api';
-import { Inspection, CreateInspectionRequest, Finding } from '../../types';
+import {
+  Inspection,
+  CreateInspectionRequest,
+  InspectionsResponse,
+  ApiResponse,
+} from '../../types';
 
 export const inspectionsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getInspections: builder.query<Inspection[], { turbineId?: string }>({
-      query: ({ turbineId }) => ({
+    getInspections: builder.query<
+      ApiResponse<InspectionsResponse>,
+      { page?: number; limit?: number }
+    >({
+      query: ({ page = 1, limit = 10 }) => ({
         url: '/api/v1/inspections',
-        params: turbineId ? { turbineId } : undefined,
+        params: { page, limit },
       }),
       providesTags: (result) =>
-        result
-          ? [
-              ...result.map(({ id }) => ({ type: 'Inspection' as const, id })),
-              { type: 'Inspection', id: 'LIST' },
-            ]
-          : [{ type: 'Inspection', id: 'LIST' }],
+        result?.data?.data.map(({ id }) => ({
+          type: 'Inspection' as const,
+          id,
+        })) || [],
     }),
 
     getInspectionById: builder.query<Inspection, string>({
@@ -31,6 +37,21 @@ export const inspectionsApi = api.injectEndpoints({
       invalidatesTags: [{ type: 'Inspection', id: 'LIST' }],
     }),
 
+    updateInspection: builder.mutation<
+      Inspection,
+      { id: string; data: Partial<CreateInspectionRequest> }
+    >({
+      query: ({ id, data }) => ({
+        url: `/api/v1/inspections/${id}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'Inspection', id },
+        { type: 'Inspection', id: 'LIST' },
+      ],
+    }),
+
     deleteInspection: builder.mutation<void, string>({
       query: (id) => ({
         url: `/api/v1/inspections/${id}`,
@@ -41,13 +62,6 @@ export const inspectionsApi = api.injectEndpoints({
         { type: 'Inspection', id: 'LIST' },
       ],
     }),
-
-    getInspectionFindings: builder.query<Finding[], string>({
-      query: (inspectionId) => `/api/v1/inspections/${inspectionId}/findings`,
-      providesTags: (result, error, inspectionId) => [
-        { type: 'Finding', id: inspectionId },
-      ],
-    }),
   }),
 });
 
@@ -55,6 +69,6 @@ export const {
   useGetInspectionsQuery,
   useGetInspectionByIdQuery,
   useCreateInspectionMutation,
+  useUpdateInspectionMutation,
   useDeleteInspectionMutation,
-  useGetInspectionFindingsQuery,
 } = inspectionsApi;

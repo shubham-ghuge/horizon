@@ -1,17 +1,29 @@
 import { api } from '../../services/api';
-import { Turbine, CreateTurbineRequest } from '../../types';
+import {
+  Turbine,
+  CreateTurbineRequest,
+  ApiResponse,
+  TurbinesResponse,
+} from '../../types';
 
 export const turbinesApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getTurbines: builder.query<Turbine[], void>({
-      query: () => '/api/v1/turbines',
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.map(({ id }) => ({ type: 'Turbine' as const, id })),
-              { type: 'Turbine', id: 'LIST' },
-            ]
-          : [{ type: 'Turbine', id: 'LIST' }],
+    getTurbines: builder.query<
+      ApiResponse<TurbinesResponse>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => ({
+        url: '/api/v1/turbines',
+        params: params || undefined,
+      }),
+      providesTags: (result) => {
+        return (
+          result?.data?.turbines.map((turbine) => ({
+            type: 'Turbine' as const,
+            id: turbine.id,
+          })) || []
+        );
+      },
     }),
 
     getTurbineById: builder.query<Turbine, string>({

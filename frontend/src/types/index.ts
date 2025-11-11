@@ -96,9 +96,15 @@ export interface CreateTurbineRequest {
 export interface CreateInspectionRequest {
   turbineId: string;
   date: string;
-  inspectorName?: string;
+  inspectorName: string;
   dataSource: DataSource;
   rawPackageUrl?: string;
+  findings: {
+    category: FindingCategory;
+    severity: number;
+    estimatedCost: number;
+    notes?: string;
+  }[];
 }
 
 export interface CreateFindingRequest {
@@ -111,8 +117,19 @@ export interface CreateFindingRequest {
 
 // API Response Wrappers
 export interface ApiResponse<T> {
-  data: T;
+  success: boolean;
+  data?: T;
   message?: string;
+}
+
+export interface TurbinesResponse {
+  turbines: Turbine[];
+  meta: {
+    limit: number;
+    page: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface PaginatedResponse<T> {
@@ -120,4 +137,14 @@ export interface PaginatedResponse<T> {
   total: number;
   page: number;
   pageSize: number;
+}
+
+export interface InspectionsResponse {
+  data: Inspection[];
+  meta: {
+    limit: number;
+    page: number;
+    total: number;
+    totalPages: number;
+  };
 }
